@@ -57,8 +57,33 @@ function getAutoProxy () {
     });
 }
 
+// state on or off
+function setAutoProxy (state, url) {
+    const promise =  new Promise((resolve, reject) => {
+        exec('networksetup -setautoproxystate "Wi-Fi" ' + state, (err, stdout, stderr) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(stdout);
+        });
+    });
+    promise.then(() => {
+        return new Promise((resolve, reject) => {
+            exec('networksetup -setautoproxyurl "Wi-Fi" ' + url, (err, stdout, stderr) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(stdout);
+            });
+        });
+    });
+}
+
 module.exports = {
     getProxyAutoDiscovery: getProxyAutoDiscovery,
     setProxyAutoDiscovery: setProxyAutoDiscovery,
-    getAutoProxy: getAutoProxy
+    getAutoProxy: getAutoProxy,
+    setAutoProxy: setAutoProxy
 }

@@ -1,5 +1,7 @@
 const electron = require('electron');
 const config = require('./config');
+const proxy = require('./proxy-detect');
+
 const ipcRenderer = electron.ipcRenderer;
 const remote = electron.remote;
 
@@ -25,6 +27,16 @@ const putInTray = () => {
     ipcRenderer.send("put-in-tray");
 }
 
+const handleSetProxy = () => {
+    proxy.setProxyAutoDiscovery('on');
+    proxy.setAutoProxy('on', config.proxu_url);
+}
+
+const handleRemoveProxy = () => {
+    proxy.setProxyAutoDiscovery('off');
+    proxy.setAutoProxy('off', '');
+}
+
 const checkSystemProxy = () => {
     let power = Object.keys(systemProxy).every(name => {
         return systemProxy[name];
@@ -40,9 +52,11 @@ const handleValueChange = () => {
     if (trayOn) {
         $body.classList.add('blue');
         putInTray();
+        handleSetProxy();
     } else {
         $body.classList.remove('blue');
         removeTray();
+        handleRemoveProxy();
     }
     $proxy.disabled = trayOn;
 }
