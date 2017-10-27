@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>AutoProxy</title>
+        <style media="screen">
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: sans-serif;
+                background-image: radial-gradient(rgba(57,60,76,1), rgba(36,36,46,1) 80%);
+                transition: all .2s ease-out;
+            }
+            body.blue {
+                background-color: #000;
+            }
+            .logo {
+                width: 90px;
+                height: 90px;
+                display: block;
+                margin: 0 auto;
+                z-index: 9;
+            }
+            .toggle {
+                width: 4em;
+                height: 2em;
+                border-radius: 2em;
+                padding: 2px;
+                outline: 0;
+                position: relative;
+                cursor: pointer;
+                display: block;
+                user-select: none;
+                border: 1px solid #666;
+                background-color: #f0f0f0;
+                transition: all .4s ease;
+            }
+            .toggle:after {
+                position: relative;
+                display: block;
+                content: "";
+                width: 50%;
+                height: 100%;
+                left: 0;
+                background-color: #fff;
+                border-radius: 50%;
+                transition: all .2s ease;
+            }
+            .toggle:before {
+                position: absolute;
+                left: -65px;
+                top: -140px;
+                width: 200px;
+                height: 200px;
+                margin: 0 auto;
+                background-image: none;
+                display: block;
+                content: "";
+                z-index: -1;
+                opacity: 0;
+                transition: all .2s ease .3s;
+            }
+            .checkbox {
+                display: none;
+            }
+            .checkbox:checked + .toggle {
+                background-color: #82ce81;
+            }
+            .checkbox:checked + .toggle:after {
+                left: 50%;
+            }
+            .checkbox:checked + .toggle:before {
+                opacity: .2;
+                background-image: radial-gradient(rgba(255,223,67,1), rgba(255,223,67,0) 70%);
+            }
+            .start-btn {
+                width: 4em;
+                margin: 0 auto;
+                margin-top: 40px;
+            }
+            .setting {
+                width: 80%;
+                display: block;
+                margin: 0 auto;
+                margin-top: 20px;
+            }
+            .setting input {
+                width: 100%;
+                font-size: 16px;
+                line-height: 35px;
+                color: #666;
+                border: none;
+                outline: none;
+                border-bottom: 1px solid #666;
+                background-color: rgba(0, 0, 0, 0);
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+        </style>
+    </head>
+    <body>
+        <!--logo-->
+        <img src="./icons/icon.back.png" class="logo">
+
+        <!--代理开关-->
+        <div class="start-btn">
+            <input type="checkbox" name="" id="put-in-tray" class="checkbox">
+            <label class="toggle" for="put-in-tray"></label>
+        </div>
+
+        <!--代理配置-->
+        <div class="setting">
+            <label>
+                <input type="text" value="" class="proxy-url">
+            </label>
+        </div>
+        <script src="./render.js" charset="utf-8"></script>
+    </body>
+</html>
