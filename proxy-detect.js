@@ -1,89 +1,121 @@
-const child = require('child_process');
-const exec = child.exec;
+const exec = require('child_process').exec;
+const CMD_PRE = 'networksetup';
+const CMD_NETWORK = "Wi-Fi";
+const CMD_LIST = {
+    getautoproxyurl: "getautoproxyurl",
+    setautoproxyurl: "setautoproxyurl",
+    setautoproxystate: "setautoproxystate",
+    getproxyautodiscovery: "getproxyautodiscovery",
+    setproxyautodiscovery: "setproxyautodiscovery"
+};
 
-function getProxyAutoDiscovery () {
+const makeCmd = (name, value) => {
     return new Promise((resolve, reject) => {
-        exec('networksetup -getproxyautodiscovery "Wi-Fi"', (err, stdout, stderr) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            if (stdout.toLowerCase().indexOf('on') >= 0) {
-                resolve({
-                    state: 'on'
-                });
-            } else {
-                resolve({
-                    state: 'off'
-                });
-            }
-        });
-    })
+        let cmd = '';
+        if (typeof value === 'undefined') {
+            cmd = `${CMD_PRE} -${CMD_LIST[name]} ${CMD_NETWORK}`;
+        } else {
+            cmd = `${CMD_PRE} -${CMD_LIST[name]} ${CMD_NETWORK} ${value}`;
+        }
+        resolve(cmd);
+    });
 }
 
-function setProxyAutoDiscovery (state) {
+const run = (cmd) => {
     return new Promise((resolve, reject) => {
-        exec('networksetup -setproxyautodiscovery "Wi-Fi" ' + state, (err, stdout, stderr) => {
+        exec(cmd, (err, stdout, stderr) => {
             if (err) {
                 reject(err);
-                return;
             }
-            resolve(stdout);
+            resolve(stdout.toString());
         })
     });
 }
 
-function getAutoProxy () {
+const getState = (isOn) => isOn ? 'on' : 'off';
+
+/**
+ * getProxyAutoDiscovery
+ *
+ * mac系统返回值为：
+ * Auto Proxy Discovery: Off
+ * @return {Object} 返回一个对象
+ * @return {Object.state} 当前状态，'on' or 'off'
+ */
+exports.getProxyAutoDiscovery = () => {
     return new Promise((resolve, reject) => {
-        exec('networksetup -getautoproxyurl "Wi-Fi"', (err, stdout, stderr) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            if (stdout.indexOf("URL") >= 0 && stdout.indexOf("Enabled") >= 0) {
-                let arr = stdout.split('URL:')
-                                .join('')
-                                .split('Enabled:')
-                                .map(item => item.trim());
-                arr[1] = arr[1].toLowerCase() === 'yes' ? 'on' : 'off';
-                resolve({
-                    url: arr[0],
-                    state: arr[1]
-                });
-            } else {
-                resolve(stderr);
-            }
-        });
-    });
-}
-
-// state on or off
-function setAutoProxy (state, url) {
-    const promise =  new Promise((resolve, reject) => {
-        exec('networksetup -setautoproxystate "Wi-Fi" ' + state, (err, stdout, stderr) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(stdout);
-        });
-    });
-    promise.then(() => {
-        return new Promise((resolve, reject) => {
-            exec('networksetup -setautoproxyurl "Wi-Fi" ' + url, (err, stdout, stderr) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                resolve(stdout);
+        makeCmd('getproxyautodiscovery')
+            .then(run)
+            .then(res => {
+                let isOn = res.toLowerCase().indexOf('on') >= 0;
+                resolve({state: getState(isOn)});
             });
-        });
     });
 }
 
-module.exports = {
-    getProxyAutoDiscovery: getProxyAutoDiscovery,
-    setProxyAutoDiscovery: setProxyAutoDiscovery,
-    getAutoProxy: getAutoProxy,
-    setAutoProxy: setAutoProxy
+/**
+ * setProxyAutoDiscovery
+ *
+ * 设置：『自动发现代理』状态
+ * @param {String} state 状态 'on' or 'off'
+ */
+exports.setProxyAutoDiscovery = (state) => {
+    return new Promise((resolve, reject) => {
+        makeCmd('setproxyautodiscovery', state)
+            .then(run)
+            .then(resolve, reject);
+    });
+}
+
+/**
+ * getAutoProxy
+ *
+ * mac系统返回值为：
+ * URL: (null)
+ * Enabled: No
+ * @return {Object} 返回一个对象
+ * @return {Object.state} 状态，'on' or 'off'
+ * @return {Object.url} pac地址
+ */
+exports.getAutoProxy = () => {
+    return new Promise((resolve, reject) => {
+        makeCmd('getautoproxyurl')
+            .then(run)
+            .then(res => {
+                let isOk = res.indexOf("URL") >= 0 && res.indexOf("Enabled") >= 0;
+                if (!isOk) {
+                    reject('data error.');
+                } else {
+                    let sourceArr = res.split('URL:').join('').split('Enabled:');
+                    let arr = sourceArr.map(item => item.trim());
+                    let isOn = arr[1].toLowerCase() === 'yes';
+                    resolve({
+                        url: arr[0],
+                        state: getState(isOn)
+                    })
+                }
+        })
+    })
+}
+
+/**
+ * setAutoProxy
+ *
+ * 设置：『自动代理配置』
+ * @param {String} state 状态，'on' or 'off'
+ * @param {String} url pac地址
+ */
+exports.setAutoProxy = (state, url) => {
+    const p = new Promise((resolve, reject) => {
+        makeCmd('setautoproxystate', state)
+            .then(run)
+            .then(resolve, reject);
+    });
+    p.then(() => {
+        return new Promise((resolve, reject) => {
+            makeCmd('setautoproxyurl', url)
+                .then(run)
+                .then(resolve, reject)
+        })
+    });
 }
