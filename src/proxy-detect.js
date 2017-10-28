@@ -49,7 +49,7 @@ exports.getProxyAutoDiscovery = () => {
             .then(res => {
                 let isOn = res.toLowerCase().indexOf('on') >= 0;
                 resolve({state: getState(isOn)});
-            });
+            }, reject);
     });
 }
 
